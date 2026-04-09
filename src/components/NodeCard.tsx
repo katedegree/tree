@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react'
+import { Trash2, ChevronDown } from 'lucide-react'
 import { cn } from '../utils'
 import type { GoalNode, NodeCategory } from '../types'
 
@@ -8,13 +8,16 @@ interface Props {
   node: GoalNode
   isRoot?: boolean
   isLeaf?: boolean
+  hasChildren?: boolean
+  collapsed?: boolean
   onUpdate: (title: string) => void
   onToggle: () => void
   onDelete: () => void
   onCategoryChange: (category: NodeCategory) => void
+  onToggleCollapse: () => void
 }
 
-export function NodeCard({ node, isRoot, isLeaf, onUpdate, onToggle, onDelete, onCategoryChange }: Props) {
+export function NodeCard({ node, isRoot, isLeaf, hasChildren, collapsed, onUpdate, onToggle, onDelete, onCategoryChange, onToggleCollapse }: Props) {
   const locked = node.completed
 
   return (
@@ -54,15 +57,30 @@ export function NodeCard({ node, isRoot, isLeaf, onUpdate, onToggle, onDelete, o
           )}
         />
 
-        {/* Delete — hidden when locked */}
-        {!isRoot && !locked && (
-          <button
-            onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 shrink-0 mt-1 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg p-2"
-          >
-            <Trash2 size={16} />
-          </button>
-        )}
+        <div className="flex items-center gap-0.5 mt-1 shrink-0">
+          {/* Collapse toggle */}
+          {hasChildren && (
+            <button
+              onClick={onToggleCollapse}
+              className="text-zinc-600 hover:text-zinc-300 rounded-lg p-2 transition-colors"
+            >
+              <ChevronDown
+                size={16}
+                className={cn('transition-transform duration-200', collapsed && '-rotate-90')}
+              />
+            </button>
+          )}
+
+          {/* Delete — hidden when locked */}
+          {!isRoot && !locked && (
+            <button
+              onClick={onDelete}
+              className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg p-2"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Category selector — leaf nodes only, disabled when locked */}

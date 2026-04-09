@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+
 import type { NodeCategory, TreeNodes } from "../types";
 import { NodeCard } from "./NodeCard";
 import { Plus } from "lucide-react";
@@ -66,6 +67,7 @@ interface ChildrenSectionProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onCategoryChange: (id: string, category: NodeCategory) => void;
+  onToggleCollapsed: (id: string) => void;
 }
 
 function ChildrenSection({
@@ -77,6 +79,7 @@ function ChildrenSection({
   onToggle,
   onDelete,
   onCategoryChange,
+  onToggleCollapsed,
 }: ChildrenSectionProps) {
   return (
     <div className="ml-6 mt-3 border-l border-zinc-600">
@@ -99,6 +102,7 @@ function ChildrenSection({
               onToggle={onToggle}
               onDelete={onDelete}
               onCategoryChange={onCategoryChange}
+              onToggleCollapsed={onToggleCollapsed}
             />
           </motion.div>
         ))}
@@ -121,6 +125,7 @@ interface RowProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onCategoryChange: (id: string, category: NodeCategory) => void;
+  onToggleCollapsed: (id: string) => void;
 }
 
 function TreeRow({
@@ -131,32 +136,50 @@ function TreeRow({
   onToggle,
   onDelete,
   onCategoryChange,
+  onToggleCollapsed,
 }: RowProps) {
   const node = nodes[nodeId];
   if (!node) return null;
 
   const isLeaf = node.childIds.length === 0;
+  const hasChildren = node.childIds.length > 0;
 
   return (
     <div>
       <NodeCard
         node={node}
         isLeaf={isLeaf}
+        hasChildren={hasChildren}
+        collapsed={node.collapsed}
         onUpdate={(title) => onUpdate(nodeId, title)}
         onToggle={() => onToggle(nodeId)}
         onDelete={() => onDelete(nodeId)}
         onCategoryChange={(cat) => onCategoryChange(nodeId, cat)}
+        onToggleCollapse={() => onToggleCollapsed(nodeId)}
       />
-      <ChildrenSection
-        parentId={nodeId}
-        childIds={node.childIds}
-        nodes={nodes}
-        onAddChild={onAddChild}
-        onUpdate={onUpdate}
-        onToggle={onToggle}
-        onDelete={onDelete}
-        onCategoryChange={onCategoryChange}
-      />
+      <AnimatePresence initial={false}>
+        {!node.collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <ChildrenSection
+              parentId={nodeId}
+              childIds={node.childIds}
+              nodes={nodes}
+              onAddChild={onAddChild}
+              onUpdate={onUpdate}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onCategoryChange={onCategoryChange}
+              onToggleCollapsed={onToggleCollapsed}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -169,6 +192,7 @@ interface TreeViewProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onCategoryChange: (id: string, category: NodeCategory) => void;
+  onToggleCollapsed: (id: string) => void;
 }
 
 export function TreeView({
@@ -179,6 +203,7 @@ export function TreeView({
   onToggle,
   onDelete,
   onCategoryChange,
+  onToggleCollapsed,
 }: TreeViewProps) {
   const root = nodes[rootId];
   if (!root) return null;
@@ -189,21 +214,37 @@ export function TreeView({
         node={root}
         isRoot
         isLeaf={root.childIds.length === 0}
+        hasChildren={root.childIds.length > 0}
+        collapsed={root.collapsed}
         onUpdate={(title) => onUpdate(rootId, title)}
         onToggle={() => onToggle(rootId)}
         onDelete={() => {}}
         onCategoryChange={(cat) => onCategoryChange(rootId, cat)}
+        onToggleCollapse={() => onToggleCollapsed(rootId)}
       />
-      <ChildrenSection
-        parentId={rootId}
-        childIds={root.childIds}
-        nodes={nodes}
-        onAddChild={onAddChild}
-        onUpdate={onUpdate}
-        onToggle={onToggle}
-        onDelete={onDelete}
-        onCategoryChange={onCategoryChange}
-      />
+      <AnimatePresence initial={false}>
+        {!root.collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <ChildrenSection
+              parentId={rootId}
+              childIds={root.childIds}
+              nodes={nodes}
+              onAddChild={onAddChild}
+              onUpdate={onUpdate}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onCategoryChange={onCategoryChange}
+              onToggleCollapsed={onToggleCollapsed}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

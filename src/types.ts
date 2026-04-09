@@ -4,6 +4,7 @@ export interface GoalNode {
   id: string
   title: string
   completed: boolean
+  collapsed: boolean
   parentId: string | null
   childIds: string[]
   category: NodeCategory

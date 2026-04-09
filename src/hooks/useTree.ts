@@ -9,6 +9,7 @@ function createInitialNodes(): TreeNodes {
       id: ROOT_ID,
       title: '最終目標',
       completed: false,
+      collapsed: false,
       parentId: null,
       childIds: [],
       category: null,
@@ -24,6 +25,7 @@ function loadState(): { nodes: TreeNodes; rootId: string } {
       // migrate existing nodes that lack category
       Object.values(parsed.nodes as TreeNodes).forEach((n) => {
         if (n.category === undefined) n.category = null
+      if (n.collapsed === undefined) n.collapsed = false
       })
       return parsed
     }
@@ -43,7 +45,7 @@ export function useTree() {
   const addNode = useCallback(
     (parentId: string, title: string) => {
       const id = crypto.randomUUID()
-      const newNode: GoalNode = { id, title, completed: false, parentId, childIds: [], category: null }
+      const newNode: GoalNode = { id, title, completed: false, collapsed: false, parentId, childIds: [], category: null }
       persist({
         ...nodes,
         [id]: newNode,
@@ -96,9 +98,16 @@ export function useTree() {
     [nodes],
   )
 
+  const toggleCollapsed = useCallback(
+    (id: string) => {
+      persist({ ...nodes, [id]: { ...nodes[id], collapsed: !nodes[id].collapsed } })
+    },
+    [nodes],
+  )
+
   const reset = useCallback(() => {
     persist(createInitialNodes())
   }, [])
 
-  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, deleteNode, reset }
+  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, deleteNode, reset }
 }

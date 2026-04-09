@@ -2,7 +2,7 @@ import { useTree } from './hooks/useTree'
 import { TreeView } from './components/TreeView'
 
 export default function App() {
-  const { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, deleteNode } = useTree()
+  const { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, deleteNode } = useTree()
 
   return (
     <div className="min-h-screen bg-zinc-950 p-10 overflow-x-auto">
@@ -14,6 +14,7 @@ export default function App() {
         onToggle={toggleComplete}
         onDelete={deleteNode}
         onCategoryChange={updateCategory}
+        onToggleCollapsed={toggleCollapsed}
       />
     </div>
   )
