@@ -13,6 +13,7 @@ function createInitialNodes(): TreeNodes {
       parentId: null,
       childIds: [],
       category: null,
+      actions: [],
     },
   }
 }
@@ -22,10 +23,10 @@ function loadState(): { nodes: TreeNodes; rootId: string } {
     const saved = localStorage.getItem('goal-tree')
     if (saved) {
       const parsed = JSON.parse(saved)
-      // migrate existing nodes that lack category
       Object.values(parsed.nodes as TreeNodes).forEach((n) => {
         if (n.category === undefined) n.category = null
-      if (n.collapsed === undefined) n.collapsed = false
+        if (n.collapsed === undefined) n.collapsed = false
+        if (n.actions === undefined) n.actions = []
       })
       return parsed
     }
@@ -45,7 +46,7 @@ export function useTree() {
   const addNode = useCallback(
     (parentId: string, title: string) => {
       const id = crypto.randomUUID()
-      const newNode: GoalNode = { id, title, completed: false, collapsed: false, parentId, childIds: [], category: null }
+      const newNode: GoalNode = { id, title, completed: false, collapsed: false, parentId, childIds: [], category: null, actions: [] }
       persist({
         ...nodes,
         [id]: newNode,
@@ -76,6 +77,44 @@ export function useTree() {
     [nodes],
   )
 
+  const toggleCollapsed = useCallback(
+    (id: string) => {
+      persist({ ...nodes, [id]: { ...nodes[id], collapsed: !nodes[id].collapsed } })
+    },
+    [nodes],
+  )
+
+  const addAction = useCallback(
+    (nodeId: string) => {
+      const action = { id: crypto.randomUUID(), content: '' }
+      const node = nodes[nodeId]
+      persist({ ...nodes, [nodeId]: { ...node, actions: [...node.actions, action] } })
+    },
+    [nodes],
+  )
+
+  const updateAction = useCallback(
+    (nodeId: string, actionId: string, content: string) => {
+      const node = nodes[nodeId]
+      persist({
+        ...nodes,
+        [nodeId]: {
+          ...node,
+          actions: node.actions.map((a) => (a.id === actionId ? { ...a, content } : a)),
+        },
+      })
+    },
+    [nodes],
+  )
+
+  const deleteAction = useCallback(
+    (nodeId: string, actionId: string) => {
+      const node = nodes[nodeId]
+      persist({ ...nodes, [nodeId]: { ...node, actions: node.actions.filter((a) => a.id !== actionId) } })
+    },
+    [nodes],
+  )
+
   const deleteNode = useCallback(
     (id: string) => {
       const toDelete = new Set<string>()
@@ -98,16 +137,9 @@ export function useTree() {
     [nodes],
   )
 
-  const toggleCollapsed = useCallback(
-    (id: string) => {
-      persist({ ...nodes, [id]: { ...nodes[id], collapsed: !nodes[id].collapsed } })
-    },
-    [nodes],
-  )
-
   const reset = useCallback(() => {
     persist(createInitialNodes())
   }, [])
 
-  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, deleteNode, reset }
+  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, addAction, updateAction, deleteAction, deleteNode, reset }
 }
