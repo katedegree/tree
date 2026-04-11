@@ -14,19 +14,23 @@ import {
 
 // ポインターが重なっている要素を優先し、複数ある場合は最小面積（最も具体的）を選ぶ
 const treeCollisionDetection: CollisionDetection = (args) => {
-  const pointerCollisions = pointerWithin(args)
+  const pointerCollisions = pointerWithin(args);
   if (pointerCollisions.length > 0) {
     return [...pointerCollisions].sort((a, b) => {
-      const aRect = args.droppableRects.get(a.id)
-      const bRect = args.droppableRects.get(b.id)
-      if (!aRect || !bRect) return 0
-      return aRect.width * aRect.height - bRect.width * bRect.height
-    })
+      const aRect = args.droppableRects.get(a.id);
+      const bRect = args.droppableRects.get(b.id);
+      if (!aRect || !bRect) return 0;
+      return aRect.width * aRect.height - bRect.width * bRect.height;
+    });
   }
-  return closestCenter(args)
-}
+  return closestCenter(args);
+};
 
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { GoalNode, NodeCategory, TreeNodes } from "../types";
 import { NodeCard } from "./node-card";
@@ -44,7 +48,7 @@ const getZoneParentId = (id: string) => id.slice(ZONE_PREFIX.length);
 function resolveTarget(
   overId: string,
   xDelta: number,
-  nodes: TreeNodes
+  nodes: TreeNodes,
 ): { parentId: string; insertIndex?: number } | null {
   const overNode = nodes[overId];
   if (!overNode) return null;
@@ -55,7 +59,10 @@ function resolveTarget(
     if (!overNode.parentId) return null;
     const parent = nodes[overNode.parentId];
     const idx = parent.childIds.indexOf(overId);
-    return { parentId: overNode.parentId, insertIndex: idx >= 0 ? idx : undefined };
+    return {
+      parentId: overNode.parentId,
+      insertIndex: idx >= 0 ? idx : undefined,
+    };
   } else {
     // 一段上
     const overParentId = overNode.parentId;
@@ -65,7 +72,10 @@ function resolveTarget(
     if (!grandParentId) {
       // これ以上上がれないので同レベル扱い
       const idx = overParent.childIds.indexOf(overId);
-      return { parentId: overParentId, insertIndex: idx >= 0 ? idx : undefined };
+      return {
+        parentId: overParentId,
+        insertIndex: idx >= 0 ? idx : undefined,
+      };
     }
     const grandParent = nodes[grandParentId];
     const idx = grandParent.childIds.indexOf(overParentId);
@@ -93,10 +103,18 @@ function AddRow({ onAdd }: { onAdd: (title: string) => void }) {
           autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onBlur={() => { if (!value.trim()) { setActive(false); setValue(""); } else submit(); }}
+          onBlur={() => {
+            if (!value.trim()) {
+              setActive(false);
+              setValue("");
+            } else submit();
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") submit();
-            if (e.key === "Escape") { setActive(false); setValue(""); }
+            if (e.key === "Escape") {
+              setActive(false);
+              setValue("");
+            }
           }}
           placeholder="達成条件を仮定する..."
           className="flex-1 min-w-0 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-600"
@@ -128,9 +146,21 @@ interface SharedHandlers {
   onAddAction: (nodeId: string) => void;
   onUpdateAction: (nodeId: string, actionId: string, content: string) => void;
   onDeleteAction: (nodeId: string, actionId: string) => void;
-  onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
-  onMoveNode: (nodeId: string, newParentId: string, insertIndex?: number) => void;
-  onMoveNodeIntoDescendant: (nodeId: string, newParentId: string, insertIndex?: number) => void;
+  onReorderChildren: (
+    parentId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
+  onMoveNode: (
+    nodeId: string,
+    newParentId: string,
+    insertIndex?: number,
+  ) => void;
+  onMoveNodeIntoDescendant: (
+    nodeId: string,
+    newParentId: string,
+    insertIndex?: number,
+  ) => void;
 }
 
 function FirstChildZone({ parentId }: { parentId: string }) {
@@ -152,9 +182,14 @@ function GhostCard({ node }: { node: GoalNode }) {
           node={node}
           isLeaf={node.childIds.length === 0}
           hasChildren={false}
-          onUpdate={() => {}} onToggle={() => {}} onDelete={() => {}}
-          onCategoryChange={() => {}} onToggleCollapse={() => {}}
-          onAddAction={() => {}} onUpdateAction={() => {}} onDeleteAction={() => {}}
+          onUpdate={() => {}}
+          onToggle={() => {}}
+          onDelete={() => {}}
+          onCategoryChange={() => {}}
+          onToggleCollapse={() => {}}
+          onAddAction={() => {}}
+          onUpdateAction={() => {}}
+          onDeleteAction={() => {}}
         />
       </div>
     </motion.div>
@@ -162,10 +197,17 @@ function GhostCard({ node }: { node: GoalNode }) {
 }
 
 function TreeRow({
-  nodeId, nodes,
-  dragListeners, dragAttributes,
+  nodeId,
+  nodes,
+  dragListeners,
+  dragAttributes,
   ...handlers
-}: { nodeId: string; nodes: TreeNodes; dragListeners?: Record<string, unknown>; dragAttributes?: Record<string, unknown> } & SharedHandlers) {
+}: {
+  nodeId: string;
+  nodes: TreeNodes;
+  dragListeners?: Record<string, unknown>;
+  dragAttributes?: Record<string, unknown>;
+} & SharedHandlers) {
   const node = nodes[nodeId];
   if (!node) return null;
 
@@ -185,7 +227,9 @@ function TreeRow({
         onCategoryChange={(cat) => handlers.onCategoryChange(nodeId, cat)}
         onToggleCollapse={() => handlers.onToggleCollapsed(nodeId)}
         onAddAction={() => handlers.onAddAction(nodeId)}
-        onUpdateAction={(actionId, content) => handlers.onUpdateAction(nodeId, actionId, content)}
+        onUpdateAction={(actionId, content) =>
+          handlers.onUpdateAction(nodeId, actionId, content)
+        }
         onDeleteAction={(actionId) => handlers.onDeleteAction(nodeId, actionId)}
         dragListeners={dragListeners}
         dragAttributes={dragAttributes}
@@ -199,7 +243,12 @@ function TreeRow({
             transition={{ duration: 0.2, ease: "easeInOut" }}
             style={{ overflow: "hidden" }}
           >
-            <ChildrenSection parentId={nodeId} childIds={node.childIds} nodes={nodes} {...handlers} />
+            <ChildrenSection
+              parentId={nodeId}
+              childIds={node.childIds}
+              nodes={nodes}
+              {...handlers}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -207,8 +256,19 @@ function TreeRow({
   );
 }
 
-function SortableRow({ childId, nodes, ...handlers }: { childId: string; nodes: TreeNodes } & SharedHandlers) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: childId });
+function SortableRow({
+  childId,
+  nodes,
+  ...handlers
+}: { childId: string; nodes: TreeNodes } & SharedHandlers) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: childId });
 
   return (
     <div
@@ -235,16 +295,30 @@ function SortableRow({ childId, nodes, ...handlers }: { childId: string; nodes: 
   );
 }
 
-function ChildrenSection({ parentId, childIds, nodes, ...handlers }: { parentId: string; childIds: string[]; nodes: TreeNodes } & SharedHandlers) {
-  const { activeId, ghostParentId, ghostInsertIndex, ghostKey } = useDragStore();
+function ChildrenSection({
+  parentId,
+  childIds,
+  nodes,
+  ...handlers
+}: {
+  parentId: string;
+  childIds: string[];
+  nodes: TreeNodes;
+} & SharedHandlers) {
+  const { activeId, ghostParentId, ghostInsertIndex, ghostKey } =
+    useDragStore();
 
   // このセクションがゴーストを表示すべき唯一の場所かを確認
-  const ghostNode = ghostParentId === parentId && activeId ? nodes[activeId] : null;
+  const ghostNode =
+    ghostParentId === parentId && activeId ? nodes[activeId] : null;
 
   // ghostInsertIndex: 挿入位置（null = 末尾）
-  const insertAt = ghostNode !== null
-    ? (ghostInsertIndex !== null ? ghostInsertIndex : childIds.length)
-    : -1;
+  const insertAt =
+    ghostNode !== null
+      ? ghostInsertIndex !== null
+        ? ghostInsertIndex
+        : childIds.length
+      : -1;
 
   // ghostKey をキーに含めることで、ゴーストが別の場所に移動した際に必ず再マウントされ
   // 古いゴーストが残らないことを保証する
@@ -256,7 +330,14 @@ function ChildrenSection({ parentId, childIds, nodes, ...handlers }: { parentId:
     if (ghostNode && insertAt === i) {
       rows.push(<GhostCard key={ghostElementKey} node={ghostNode} />);
     }
-    rows.push(<SortableRow key={childId} childId={childId} nodes={nodes} {...handlers} />);
+    rows.push(
+      <SortableRow
+        key={childId}
+        childId={childId}
+        nodes={nodes}
+        {...handlers}
+      />,
+    );
   });
   if (ghostNode && insertAt >= childIds.length) {
     rows.push(<GhostCard key={ghostElementKey} node={ghostNode} />);
@@ -267,9 +348,7 @@ function ChildrenSection({ parentId, childIds, nodes, ...handlers }: { parentId:
       <FirstChildZone parentId={parentId} />
 
       <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
-        <AnimatePresence>
-          {rows}
-        </AnimatePresence>
+        <AnimatePresence>{rows}</AnimatePresence>
       </SortableContext>
 
       <div className="relative pl-5 pb-4">
@@ -315,7 +394,8 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
   const collapseAutoExpanded = (nextOverId?: string) => {
     if (!autoExpandedIdRef.current) return;
     // 新しい overId が自動展開ノードの子孫なら閉じない
-    if (nextOverId && isInSubtree(nextOverId, autoExpandedIdRef.current)) return;
+    if (nextOverId && isInSubtree(nextOverId, autoExpandedIdRef.current))
+      return;
     handlers.onToggleCollapsed(autoExpandedIdRef.current);
     autoExpandedIdRef.current = null;
   };
@@ -327,7 +407,12 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
   };
 
   const handleDragStart = ({ active }: DragStartEvent) => {
-    setDragState({ activeId: active.id as string, targetId: null, ghostParentId: null, ghostInsertIndex: null });
+    setDragState({
+      activeId: active.id as string,
+      targetId: null,
+      ghostParentId: null,
+      ghostInsertIndex: null,
+    });
     clearExpandTimer();
   };
 
@@ -341,14 +426,22 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
     }
 
     if (!over || !overId) {
-      setDragState({ targetId: null, ghostParentId: null, ghostInsertIndex: null });
+      setDragState({
+        targetId: null,
+        ghostParentId: null,
+        ghostInsertIndex: null,
+      });
       return;
     }
 
     // ゾーンID (先頭挿入用)
     if (isTopZone(overId)) {
       const zoneParentId = getZoneParentId(overId);
-      setDragState({ targetId: null, ghostParentId: zoneParentId, ghostInsertIndex: 0 });
+      setDragState({
+        targetId: null,
+        ghostParentId: zoneParentId,
+        ghostInsertIndex: 0,
+      });
       return;
     }
 
@@ -361,7 +454,11 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
 
     if (!target || target.parentId === activeNode.parentId) {
       // 同じ親内の並び替え: SortableがVisualを担当するのでゴースト不要
-      setDragState({ targetId: null, ghostParentId: null, ghostInsertIndex: null });
+      setDragState({
+        targetId: null,
+        ghostParentId: null,
+        ghostInsertIndex: null,
+      });
     } else {
       setDragState({
         targetId: xDelta > 20 ? overId : null,
@@ -416,7 +513,10 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
     if (!target) return;
 
     // target.parentId が active の子孫かどうかを確認
-    const isDescendant = (potentialDescendant: string, ancestorId: string): boolean => {
+    const isDescendant = (
+      potentialDescendant: string,
+      ancestorId: string,
+    ): boolean => {
       let current: string | null = potentialDescendant;
       while (current) {
         if (current === ancestorId) return true;
@@ -436,9 +536,17 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
       }
     } else if (isDescendant(target.parentId, active.id as string)) {
       // 自身の子孫への移動: 子を1段上げてから自分をターゲットに入れる
-      handlers.onMoveNodeIntoDescendant(active.id as string, target.parentId, target.insertIndex);
+      handlers.onMoveNodeIntoDescendant(
+        active.id as string,
+        target.parentId,
+        target.insertIndex,
+      );
     } else {
-      handlers.onMoveNode(active.id as string, target.parentId, target.insertIndex);
+      handlers.onMoveNode(
+        active.id as string,
+        target.parentId,
+        target.insertIndex,
+      );
     }
   };
 
@@ -465,8 +573,12 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
           onCategoryChange={(cat) => handlers.onCategoryChange(rootId, cat)}
           onToggleCollapse={() => handlers.onToggleCollapsed(rootId)}
           onAddAction={() => handlers.onAddAction(rootId)}
-          onUpdateAction={(actionId, content) => handlers.onUpdateAction(rootId, actionId, content)}
-          onDeleteAction={(actionId) => handlers.onDeleteAction(rootId, actionId)}
+          onUpdateAction={(actionId, content) =>
+            handlers.onUpdateAction(rootId, actionId, content)
+          }
+          onDeleteAction={(actionId) =>
+            handlers.onDeleteAction(rootId, actionId)
+          }
         />
         <AnimatePresence initial={false}>
           {!root.collapsed && (
@@ -477,7 +589,12 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
               transition={{ duration: 0.2, ease: "easeInOut" }}
               style={{ overflow: "hidden" }}
             >
-              <ChildrenSection parentId={rootId} childIds={root.childIds} nodes={nodes} {...handlers} />
+              <ChildrenSection
+                parentId={rootId}
+                childIds={root.childIds}
+                nodes={nodes}
+                {...handlers}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -491,9 +608,14 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
               isLeaf={activeNode.childIds.length === 0}
               hasChildren={activeNode.childIds.length > 0}
               collapsed={activeNode.collapsed}
-              onUpdate={() => {}} onToggle={() => {}} onDelete={() => {}}
-              onCategoryChange={() => {}} onToggleCollapse={() => {}}
-              onAddAction={() => {}} onUpdateAction={() => {}} onDeleteAction={() => {}}
+              onUpdate={() => {}}
+              onToggle={() => {}}
+              onDelete={() => {}}
+              onCategoryChange={() => {}}
+              onToggleCollapse={() => {}}
+              onAddAction={() => {}}
+              onUpdateAction={() => {}}
+              onDeleteAction={() => {}}
             />
           </div>
         ) : null}
