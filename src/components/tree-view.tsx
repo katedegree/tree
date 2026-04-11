@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DndContext,
@@ -84,48 +84,9 @@ function resolveTarget(
 }
 
 function AddRow({ onAdd }: { onAdd: (title: string) => void }) {
-  const [active, setActive] = useState(false);
-  const [value, setValue] = useState("");
-
-  const submit = () => {
-    const trimmed = value.trim();
-    if (trimmed) {
-      onAdd(trimmed);
-      setValue("");
-      setActive(false);
-    }
-  };
-
-  if (active) {
-    return (
-      <div className="w-120 border border-dashed border-zinc-600 rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-        <input
-          autoFocus
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onBlur={() => {
-            if (!value.trim()) {
-              setActive(false);
-              setValue("");
-            } else submit();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") submit();
-            if (e.key === "Escape") {
-              setActive(false);
-              setValue("");
-            }
-          }}
-          placeholder="達成条件を仮定する..."
-          className="flex-1 min-w-0 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-600"
-        />
-      </div>
-    );
-  }
-
   return (
     <button
-      onClick={() => setActive(true)}
+      onClick={() => onAdd("")}
       className="w-120 border border-dashed border-zinc-800 hover:border-zinc-600 rounded-xl px-3 py-2.5 flex items-center gap-2.5 text-zinc-600 hover:text-zinc-400"
     >
       <span className="text-sm flex items-center gap-2">

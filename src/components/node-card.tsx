@@ -89,7 +89,7 @@ export function NodeCard({
         <textarea
           value={node.title}
           onChange={(e) => onUpdate(e.target.value)}
-          placeholder="目標を入力..."
+          placeholder={isRoot ? "目標を入力..." : "達成条件を仮定する..."}
           rows={2}
           disabled={locked}
           className={cn(
