@@ -137,9 +137,56 @@ export function useTree() {
     [nodes],
   )
 
+  const moveNode = useCallback(
+    (nodeId: string, newParentId: string, insertIndex?: number) => {
+      const node = nodes[nodeId]
+      if (!node || !node.parentId || nodeId === newParentId) return
+      if (node.parentId === newParentId) return
+
+      // サイクル防止: newParentId が nodeId の子孫でないか確認
+      let current: string | null = newParentId
+      while (current) {
+        if (current === nodeId) return
+        current = nodes[current]?.parentId ?? null
+      }
+
+      const oldParentId = node.parentId
+      const newNodes = { ...nodes }
+
+      newNodes[oldParentId] = {
+        ...newNodes[oldParentId],
+        childIds: newNodes[oldParentId].childIds.filter((id) => id !== nodeId),
+      }
+
+      const newChildIds = [...newNodes[newParentId].childIds]
+      if (insertIndex !== undefined && insertIndex >= 0) {
+        newChildIds.splice(insertIndex, 0, nodeId)
+      } else {
+        newChildIds.push(nodeId)
+      }
+      newNodes[newParentId] = { ...newNodes[newParentId], childIds: newChildIds }
+      newNodes[nodeId] = { ...newNodes[nodeId], parentId: newParentId }
+
+      persist(newNodes)
+    },
+    [nodes],
+  )
+
+  const reorderChildren = useCallback(
+    (parentId: string, oldIndex: number, newIndex: number) => {
+      const parent = nodes[parentId]
+      if (!parent) return
+      const newChildIds = [...parent.childIds]
+      const [removed] = newChildIds.splice(oldIndex, 1)
+      newChildIds.splice(newIndex, 0, removed)
+      persist({ ...nodes, [parentId]: { ...parent, childIds: newChildIds } })
+    },
+    [nodes],
+  )
+
   const reset = useCallback(() => {
     persist(createInitialNodes())
   }, [])
 
-  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, addAction, updateAction, deleteAction, deleteNode, reset }
+  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, addAction, updateAction, deleteAction, deleteNode, reorderChildren, moveNode, reset }
 }

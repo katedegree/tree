@@ -1,6 +1,7 @@
-import { Trash2, ChevronDown, Plus, X } from 'lucide-react'
+import { Trash2, ChevronDown, Plus, X, GripVertical } from 'lucide-react'
 import { cn } from '../utils'
 import type { ActionRecord, GoalNode, NodeCategory } from '../types'
+import { useDragStore } from '../stores'
 
 const CATEGORIES: NonNullable<NodeCategory>[] = ['意識', '行動']
 
@@ -18,13 +19,18 @@ interface Props {
   onAddAction: () => void
   onUpdateAction: (actionId: string, content: string) => void
   onDeleteAction: (actionId: string) => void
+  dragListeners?: Record<string, unknown>
+  dragAttributes?: Record<string, unknown>
 }
 
 export function NodeCard({
   node, isRoot, isLeaf, hasChildren, collapsed,
   onUpdate, onToggle, onDelete, onCategoryChange, onToggleCollapse,
   onAddAction, onUpdateAction, onDeleteAction,
+  dragListeners, dragAttributes,
 }: Props) {
+  const { targetId } = useDragStore()
+  const isDropTarget = !isRoot && targetId === node.id
   const canComplete = node.category !== '意識'
   const locked = node.completed && canComplete
   const showActions = isLeaf && !isRoot && node.category === '意識'
@@ -36,11 +42,21 @@ export function NodeCard({
         isRoot
           ? 'bg-zinc-800/80 border-zinc-700'
           : 'bg-zinc-800/40 border-zinc-800 hover:border-zinc-700',
+        isDropTarget && 'border-indigo-500/60 bg-indigo-500/5',
         locked && 'opacity-40 cursor-not-allowed',
       )}
     >
       {/* Main row */}
-      <div className="flex items-start gap-2.5 px-3 py-2.5">
+      <div className="flex items-start gap-2 px-3 py-2.5">
+        {!isRoot && (
+          <button
+            {...(dragListeners as React.HTMLAttributes<HTMLButtonElement>)}
+            {...(dragAttributes as React.HTMLAttributes<HTMLButtonElement>)}
+            className="opacity-0 group-hover:opacity-100 shrink-0 mt-1.5 text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical size={14} />
+          </button>
+        )}
         {canComplete ? (
           <button
             onClick={onToggle}
