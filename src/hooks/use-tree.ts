@@ -184,9 +184,47 @@ export function useTree() {
     [nodes],
   )
 
+  // 自身の子孫への移動: 自分の子を1段上げてから自分をターゲットに入れる
+  const moveNodeIntoDescendant = useCallback(
+    (nodeId: string, newParentId: string, insertIndex?: number) => {
+      const node = nodes[nodeId]
+      if (!node || !node.parentId) return
+
+      const oldParentId = node.parentId
+      const newNodes = { ...nodes }
+
+      // 1. A の子を A の元いた親に移動（A のいた位置に差し込む）
+      const oldParent = newNodes[oldParentId]
+      const nodeIndexInParent = oldParent.childIds.indexOf(nodeId)
+      const liftedChildIds = node.childIds
+
+      const newOldParentChildIds = [...oldParent.childIds]
+      newOldParentChildIds.splice(nodeIndexInParent, 1, ...liftedChildIds)
+      newNodes[oldParentId] = { ...oldParent, childIds: newOldParentChildIds }
+
+      liftedChildIds.forEach((childId) => {
+        newNodes[childId] = { ...newNodes[childId], parentId: oldParentId }
+      })
+
+      // 2. A の子リストを空にして新しい親へ移動
+      newNodes[nodeId] = { ...newNodes[nodeId], childIds: [], parentId: newParentId }
+
+      const newParentChildIds = [...newNodes[newParentId].childIds]
+      if (insertIndex !== undefined && insertIndex >= 0) {
+        newParentChildIds.splice(insertIndex, 0, nodeId)
+      } else {
+        newParentChildIds.push(nodeId)
+      }
+      newNodes[newParentId] = { ...newNodes[newParentId], childIds: newParentChildIds }
+
+      persist(newNodes)
+    },
+    [nodes],
+  )
+
   const reset = useCallback(() => {
     persist(createInitialNodes())
   }, [])
 
-  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, addAction, updateAction, deleteAction, deleteNode, reorderChildren, moveNode, reset }
+  return { nodes, rootId, addNode, updateNode, updateCategory, toggleComplete, toggleCollapsed, addAction, updateAction, deleteAction, deleteNode, reorderChildren, moveNode, moveNodeIntoDescendant, reset }
 }

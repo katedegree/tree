@@ -130,6 +130,7 @@ interface SharedHandlers {
   onDeleteAction: (nodeId: string, actionId: string) => void;
   onReorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void;
   onMoveNode: (nodeId: string, newParentId: string, insertIndex?: number) => void;
+  onMoveNodeIntoDescendant: (nodeId: string, newParentId: string, insertIndex?: number) => void;
 }
 
 function FirstChildZone({ parentId }: { parentId: string }) {
@@ -291,17 +292,38 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
 
   const { activeId, setDragState, resetDragState } = useDragStore();
   const expandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expandOverIdRef = useRef<string | null>(null);
+  const autoExpandedIdRef = useRef<string | null>(null); // 自動展開したノードID
 
   const clearExpandTimer = () => {
     if (expandTimerRef.current) {
       clearTimeout(expandTimerRef.current);
       expandTimerRef.current = null;
     }
+    expandOverIdRef.current = null;
+  };
+
+  const isInSubtree = (nodeId: string, ancestorId: string): boolean => {
+    let current: string | null = nodeId;
+    while (current) {
+      if (current === ancestorId) return true;
+      current = nodes[current]?.parentId ?? null;
+    }
+    return false;
+  };
+
+  const collapseAutoExpanded = (nextOverId?: string) => {
+    if (!autoExpandedIdRef.current) return;
+    // 新しい overId が自動展開ノードの子孫なら閉じない
+    if (nextOverId && isInSubtree(nextOverId, autoExpandedIdRef.current)) return;
+    handlers.onToggleCollapsed(autoExpandedIdRef.current);
+    autoExpandedIdRef.current = null;
   };
 
   const reset = () => {
     resetDragState();
     clearExpandTimer();
+    collapseAutoExpanded();
   };
 
   const handleDragStart = ({ active }: DragStartEvent) => {
@@ -310,14 +332,18 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
   };
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
-    clearExpandTimer();
+    const overId = over?.id as string | undefined;
 
-    if (!over) {
+    // over しているノードが変わった時だけタイマーをリセット＆自動展開を閉じ直す
+    if (overId !== expandOverIdRef.current) {
+      clearExpandTimer();
+      collapseAutoExpanded(overId);
+    }
+
+    if (!over || !overId) {
       setDragState({ targetId: null, ghostParentId: null, ghostInsertIndex: null });
       return;
     }
-
-    const overId = over.id as string;
 
     // ゾーンID (先頭挿入用)
     if (isTopZone(overId)) {
@@ -344,11 +370,15 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
       });
     }
 
-    if (overNode.collapsed) {
+    // 折りたたまれたノードの上に留まり続けたら自動展開（離れたら閉じ直す）
+    if (overNode.collapsed && !expandTimerRef.current) {
+      expandOverIdRef.current = overId;
       expandTimerRef.current = setTimeout(() => {
         handlers.onToggleCollapsed(overId);
+        autoExpandedIdRef.current = overId; // 自動展開を記録
         expandTimerRef.current = null;
-      }, 600);
+        expandOverIdRef.current = null;
+      }, 300);
     }
   };
 
@@ -385,6 +415,16 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
     const target = resolveTarget(overId, xDelta, nodes);
     if (!target) return;
 
+    // target.parentId が active の子孫かどうかを確認
+    const isDescendant = (potentialDescendant: string, ancestorId: string): boolean => {
+      let current: string | null = potentialDescendant;
+      while (current) {
+        if (current === ancestorId) return true;
+        current = nodes[current]?.parentId ?? null;
+      }
+      return false;
+    };
+
     if (target.parentId === activeNode.parentId) {
       // 同じ親内での並び替え
       const parent = nodes[activeNode.parentId!];
@@ -394,6 +434,9 @@ export function TreeView({ rootId, nodes, ...handlers }: TreeViewProps) {
       if (oldIndex !== -1 && oldIndex !== newIndex) {
         handlers.onReorderChildren(activeNode.parentId!, oldIndex, newIndex);
       }
+    } else if (isDescendant(target.parentId, active.id as string)) {
+      // 自身の子孫への移動: 子を1段上げてから自分をターゲットに入れる
+      handlers.onMoveNodeIntoDescendant(active.id as string, target.parentId, target.insertIndex);
     } else {
       handlers.onMoveNode(active.id as string, target.parentId, target.insertIndex);
     }

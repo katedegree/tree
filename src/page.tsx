@@ -19,6 +19,7 @@ export default function () {
     deleteNode,
     reorderChildren,
     moveNode,
+    moveNodeIntoDescendant,
   } = useTree();
 
   const [copied, setCopied] = useState(false);
@@ -42,7 +43,7 @@ export default function () {
     <div className="min-h-screen bg-zinc-950 p-10 overflow-x-auto">
       <button
         onClick={handleCopy}
-        className="fixed top-4 right-4 flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-lg px-4 py-2 transition-colors"
+        className="fixed top-4 right-4 z-50 flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-lg px-4 py-2 transition-colors"
       >
         {copied ? <Check size={15} /> : <Copy size={15} />}
         {copied ? "コピーしました" : "YAMLをコピー"}
@@ -61,6 +62,7 @@ export default function () {
         onDeleteAction={deleteAction}
         onReorderChildren={reorderChildren}
         onMoveNode={moveNode}
+        onMoveNodeIntoDescendant={moveNodeIntoDescendant}
       />
     </div>
   );
