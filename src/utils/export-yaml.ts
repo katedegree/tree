@@ -50,11 +50,11 @@ function wrapText(text: string, continuation: string): string {
 function nodeToYAML(nodes: TreeNodes, nodeId: string, indent: number): string {
   const node = nodes[nodeId];
   if (!node || node.completed) return "";
-  const pad = "  ".repeat(indent);
+  const pad = "    ".repeat(indent);
 
-  const cont = `${pad}  `; // "- " の分2スペース、タイトル開始位置に揃える
+  const cont = `${pad}  `;
   if (node.childIds.length === 0) {
-    const prefix = node.category ? `[${node.category}]: ` : "";
+    const prefix = node.category ? `[${node.category}]\n${pad}  ` : "";
     return `${pad}- ${prefix}${wrapText(node.title, cont)}`;
   }
 
